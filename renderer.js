@@ -4,17 +4,11 @@
 
 var d3 = require('./d3.min.js');
 var UIkit = require('./uikit.min.js');
-var bar = document.getElementById('js-progressbar');
-var ffmpeg = require('fluent-ffmpeg');
 var path = require('path');
 var prcoess = require('process');
-var ffmpegPath = 'C:\\ffmpeg\\bin';
 var fs = require('fs');
 const ytdl = require('ytdl-core');
-var thumb = require('node-thumbnail').thumb;
 const {shell} = require('electron');
-ffmpeg.setFfmpegPath(path.join(ffmpegPath, 'ffmpeg.exe'));
-ffmpeg.setFfprobePath(path.join(ffmpegPath, 'ffprobe.exe'));
 
 var cwd = process.cwd();
 var mediaID = 0;
@@ -51,8 +45,6 @@ var logger = tracer.console(
 			}
 ); 
 
-// converting 중 drop을 막고
-// convert가 끝나면 drop을 푸는 코드
 
 function UKlogger(msg){
     d3.select('#msgPanel')
@@ -73,19 +65,6 @@ function UKalert(msg){
 var webview = d3.select('webview').node();
 var zoomFactor = 0.75;
 
-/*
-d3.select('#zoomIn').on('click',function(){
-    logger.info(zoomFactor);
-    zoomFactor += 0.1
-    webview.setZoomFactor(zoomFactor);
-})
-
-d3.select('#zoomOut').on('click',function(){
-    logger.info(zoomFactor)
-    zoomFactor -= 0.1
-    webview.setZoomFactor(zoomFactor);
-})
-*/
 
 d3.select('webview').on('dom-ready', function(){
     // when page load finished, update address bar
@@ -94,16 +73,6 @@ d3.select('webview').on('dom-ready', function(){
     d3.select('#address').property('value', url);
     webview.setZoomFactor(zoomFactor);
 })
-
-
-/* using d3, callback parameter d,i,n
-d3.select('webview').on('did-navigate-in-page', function(a ,b, c, d){
-    logger.info('did-navigate-in-page a : %s', a)
-    logger.info('did-navigate-in-page b : %s', b)
-    logger.info('did-navigate-in-page c : %j', c)
-    logger.info('did-navigate-in-page d : %s', d)
-})
-*/
 
 
 d3.select('webview').on('did-finish-load',function(d,i,n){
@@ -121,11 +90,6 @@ d3.select('#loadURL').on('click',function(){
     webview.loadURL(url);
 })
 
-/*
-d3.select('webview').on('did-navigate', function(url){
-    logger.info('did-navigate : %s', url)
-})
-*/
 
 d3.select('#addMP3').on('click',function(){
     // from getMediaInfo, get source URL
@@ -157,8 +121,9 @@ function addPannel(options){
     var id   = options.mediaID;
     var url  = options.url;
     var type = options.type;
+    var duration = options.duration;
     var cleanTitle = options.title.replace(/["<>/:%*?|\\]/g, "");
-    var rowHead = '[' + type + ']' + cleanTitle;
+    var rowHead = '[' + type + ']' + cleanTitle + ' - ' + duration + 'sec';
     var pannelID = '#mediaPannel';
     var fname = cleanTitle + '.' + type;
 
@@ -329,7 +294,8 @@ function getMediaInfo(url,type,callback){
         //logger.info(info);
         logger.info(info.title);
         logger.info(info.thumbnail_url);
-        logger.info(info.formats)
+        logger.info(info.length_seconds);
+        //logger.info(info.formats)
         info.formats.forEach(function(format){
             var type = format.type;
             var quality = format.quality;
@@ -337,13 +303,13 @@ function getMediaInfo(url,type,callback){
             var container = format.container;
             var encoding = format.encoding;
             var profile = format.profile;
-            logger.info(type,quality,container,encoding,profile);
+            //logger.info(type,quality,container,encoding,profile);
 
         })
         mediaID += 1;
         UIkit.modal('#procModal').hide(); 
         clearModal('getInfo');
-        var opts = {url:url, title:info.title, type:type, mediaID:mediaID};
+        var opts = {url:url, title:info.title, type:type, duration:info.length_seconds, mediaID:mediaID};
         callback(opts);
     })
     .then(null, function(err){
@@ -437,513 +403,3 @@ function download(options, addCancelHandler, addAbortHandler, done){
     */
 
 }
-
-/*
-function download(options){
-
-    var url  = options.url;
-    var type = options.type;
-    var cleanTitle = options.title.replace(/["<>/:%*?|\\]/g, "");
-
-    var typeOptions = {
-        'mp3' : {
-            'ext' : '.mp3',
-            'ytdlOpts' : {
-                'filter' : 'audioonly'
-            }
-        },
-        'mp4' : {
-            'ext' : '.mp4',
-            'ytdlOpts' : {
-                'filter' : 'audioandvideo'
-            }           
-        }
-    }
-
-
-    var fname = cleanTitle + typeOptions[type].ext;
-    var modalID = 'getMedia'
-    var modalBaseMsg = 'download stream...';
-
-    //addPreview(options.type, fname, options.mediaID);
-    
-    clearModal(modalID)
-    createModal(modalID, modalBaseMsg)
-    logger.info('download to %s',fname );
-    UIkit.modal('#procModal').show(); 
-    
-    var downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
-    
-    downloadStream.pipe(fs.createWriteStream(fname));  
-    
-    downloadStream.on('progress',function(length,totalDownloaded,totalDownloadedLength){
-        
-        var percent = (totalDownloaded / totalDownloadedLength) * 100;
-        logger.info('processed : %s', percent.toFixed(2) + '%');
-        d3.select('#' + modalID).text(modalBaseMsg + ' ' + percent.toFixed(2) + '%');
-        if(totalDownloaded == totalDownloadedLength){
-            logger.info('download complete!');
-            UIkit.modal('#procModal').hide();
-            clearModal('getMedia');
-            var fullname = path.join(cwd, fname);
-            addPreview(options.type, fullname, options.mediaID);
-        }
-    })   
-    
-
-
-}
-
-
-function addPreview(type, fullname, mediaID){
-    var id = 'clip' + mediaID;
-    d3.select('#mediaPannel')
-    .append('div')
-    .attr('id', id)
-    .attr('uk-margin','')
-    .append('button')
-    .classed('uk-button',true)
-    .classed('uk-button-default',true)
-    .classed('uk-button-small',true)
-    .classed('uk-animation-scale-up',true)
-    .classed('uk-margin-medium-right',true)
-    .classed('uk-margin-small-bottom',true)
-    .text('play')
-    .on('click',function(){
-        logger.info('play clicked');
-        d3.select('#videoPlayer').attr('src',fullname); 
-    })
-    
-    var basename = path.basename(fullname);
-
-    d3.select('#mediaPannel')
-    .select('div#' + id)
-    .append('button')
-    .classed('uk-button',true)    
-    .classed('uk-button-text',true)
-    .classed('uk-button-small',true)
-    .classed('uk-animation-scale-up',true)
-    .classed('uk-margin-small-bottom',true)
-    .text(basename)   
-    .on('click',function(){
-        logger.info('open file manager')
-        shell.showItemInFolder(fullname);
-    }) 
-}
-
-d3.select('#capture').on('click', function(){
-    logger.info(d3.select('#videoPlayer').property('currentTime'));
-    var offset = d3.select('#videoPlayer').property('currentTime')
-    var fullname =  d3.select('#videoPlayer').attr('src');
-    var outPath = path.dirname(fullname);
-    var extn = path.extname(fullname);
-    var base = path.basename(fullname,extn);
-    var outputFile = path.join(outPath,base) + '_' + offset + '.png';
-        
-    // 변환시작 -> 기존 progress 정보 삭제
-    d3.select('#progressBody').remove();
-
-    // progress HTML 생성
-    d3.select('#procModalBody')
-    .append('p')
-    .attr('id','progressBody')
-    .text('extracting image...')
-    .append('span')
-    .attr('id','progress')
-
-    var command = ffmpeg(fullname)
-    .inputOptions(['-ss ' + offset])
-    .outputOptions(['-vframes 1'])
-    .on('start', function(commandLine) {
-        logger.info('Spawned Ffmpeg with command: ' + commandLine);   
-        UIkit.modal('#procModal').show();        
-    })
-    .on('progress', function(progress) {
-        logger.info('Processing: ' + progress.percent + '% done');
-    })
-    .on('stderr', function(stderrLine) {
-        logger.info('Stderr output: ' + stderrLine);
-    })
-    .on('error', function(err, stdout, stderr) {
-        logger.error('Cannot process video: ' + err.message);
-        fs.unlink(outputFile,function(err){
-            if(err) logger.error(err);
-            logger.info('file delete success! : %s', outputFile);
-        })
-        UIkit.modal('#procModal').hide();
-    })
-    .on('end', function(stdout, stderr) {
-        var thumbSuffix = '_thumb';
-        logger.info('capture image succeeded !');
-        var options = {
-            'source' : outputFile,
-            'destination' : path.dirname(outputFile),
-            'suffix' : thumbSuffix,
-            'width' : 100,
-            'logger' : function(message){
-                logger.info(message);
-            }
-        }
-        thumb(options)
-        .then(function(){
-            var thumbPath = path.dirname(outputFile);
-            var extn = path.extname(outputFile);
-            var baseFname = path.basename(outputFile,extn);
-            var thumbnail = path.join(thumbPath,baseFname) + thumbSuffix + extn;
-            d3.select('ul.uk-thumbnav')
-            .append('li')
-            .append('a')
-            .attr('href',outputFile)
-            //.text('image')
-            .append('img')
-            .attr('src', thumbnail);
-        })
-        .then(null,function(err){
-            logger.error(err);
-            UKalert(err);
-        })
-
-        UIkit.modal('#procModal').hide();
-        //UIkit.modal('#modalProgress').hide();
-    })
-    .output(outputFile)
-    .run();
-
-})
-
-/* 
-
-
-d3.selection().on('dragover', function(e){
-    d3.event.preventDefault();
-    d3.event.stopPropagation();    
-});
-
-d3.select('#videoPlayer').on('loadstart',function(){
-
-    var fullname = d3.select('#videoPlayer').attr('src');
-    logger.info('media ready: %s', fullname );
-    d3.select('#fileMgr').attr('disabled',null);
-    d3.select('#capture').attr('disabled',null);
-    d3.select('#upload').attr('disabled',null);
-    var from = d3.select(this).attr('from');
-    
-    if(from === 'drop'){
-        showModal('메타정보 추출중...');
-        getMeta(fullname,function(err, streamInfo, formatInfo){        
-            hideModal('메타정보 추출완료');
-            logger.info(streamInfo);
-            logger.info(formatInfo);
-
-            var beforePanelElement = d3.select('#beforePanelStream');
-            var beforeformatElement = d3.select('#beforePanelFormat');
-
-            putPanelInfo(beforePanelElement, streamInfo);
-            putPanelInfo(beforeformatElement, formatInfo);        
-
-            var origDiv = d3.select('#orig');
-            addLoadBtn(origDiv, 'orig');
-            d3.select('.load-orig').dispatch('click');
-        })    
-    }
-
-})
-
-function getMeta(fname,callback){
-    ffmpeg.ffprobe(fname, function(err,metadata){
-        if(err){
-            logger.error(err);
-            
-        }
-
-        var streamInfo = metadata.streams ? metadata.streams : {'streamInfo':'none',};
-        var formatInfo = metadata.format ? metadata.format : {'formatInfo':'none',};
-        var streamInfoArray1 = JSON.stringify(streamInfo[0]).split(',');  
-        var formatInfoArray = JSON.stringify(formatInfo).split(',');
-        if(formatInfo.nb_streams == 2){
-            var streamInfoArray2 = JSON.stringify(streamInfo[1]).split(',');
-        }
-        
-        logger.info(streamInfo);
-        logger.info(formatInfoArray);
-
-        callback(null, streamInfoArray1,formatInfoArray);
-    })
-}
-
-d3.select('#videoPlayer').on('timeupdate', function(){
-    //logger.info(d3.event.target.currentTime);
-    //logger.info(d3.event.target.duration);
-})
-
-d3.select('#videoPlayer').on('error',function(){
-    var errCode = d3.event.target.error.code;
-    var errMsg = d3.event.target.error.message;
-    //var userMsg = '<span class="uk-text-small">오류 : video loading error : code = ' + errCode + ' , msg = ' + errMsg + '</span>'; 
-    var userMsg = '오류 : video loading error : code = ' + errCode + ' , msg = ' + errMsg ;
-    // error code ref : https://developer.mozilla.org/ko/docs/Web/API/MediaError
-    console.log(userMsg);
-    UKalert(userMsg);
-
-})
-
-d3.select('#title').on('click', function(){
-    var fullname = d3.select('#videoPlayer').attr('src');
-    shell.showItemInFolder(fullname);
-})
-
-d3.select('upload').on('click', function(){
-    
-})
-
-d3.select('#capture').on('click', function(){
-    logger.info(d3.select('#videoPlayer').property('currentTime'));
-    var offset = d3.select('#videoPlayer').property('currentTime')
-    var fullname =  d3.select('#videoPlayer').attr('src');
-    var outPath = path.dirname(fullname);
-    var extn = path.extname(fullname);
-    var base = path.basename(fullname,extn);
-    var outputFile = path.join(outPath,base) + '_' + offset + '.png';
-        
-    // 변환시작 -> 기존 progress 정보 삭제
-    d3.select('#progressBody').remove();
-
-    // progress HTML 생성
-    d3.select('#procModalBody')
-    .append('p')
-    .attr('id','progressBody')
-    .text('extracting image...')
-    .append('span')
-    .attr('id','progress')
-
-    var command = ffmpeg(fullname)
-    .inputOptions(['-ss ' + offset])
-    .outputOptions(['-vframes 1'])
-    .on('start', function(commandLine) {
-        logger.info('Spawned Ffmpeg with command: ' + commandLine);   
-        UIkit.modal('#procModal').show();        
-    })
-    .on('progress', function(progress) {
-        logger.info('Processing: ' + progress.percent + '% done');
-    })
-    .on('stderr', function(stderrLine) {
-        logger.info('Stderr output: ' + stderrLine);
-    })
-    .on('error', function(err, stdout, stderr) {
-        logger.error('Cannot process video: ' + err.message);
-        fs.unlink(outputFile,function(err){
-            if(err) logger.error(err);
-            logger.info('file delete success! : %s', outputFile);
-        })
-        UIkit.modal('#procModal').hide();
-    })
-    .on('end', function(stdout, stderr) {
-        var thumbSuffix = '_thumb';
-        logger.info('capture image succeeded !');
-        var options = {
-            'source' : outputFile,
-            'destination' : path.dirname(outputFile),
-            'suffix' : thumbSuffix,
-            'width' : 100,
-            'logger' : function(message){
-                logger.info(message);
-            }
-        }
-        thumb(options)
-        .then(function(){
-            var thumbPath = path.dirname(outputFile);
-            var extn = path.extname(outputFile);
-            var baseFname = path.basename(outputFile,extn);
-            var thumbnail = path.join(thumbPath,baseFname) + thumbSuffix + extn;
-            d3.select('ul.uk-thumbnav')
-            .append('li')
-            .append('a')
-            .attr('href',outputFile)
-            .text('image')
-            //.append('img')
-            //.attr('src', thumbnail);
-        })
-        .then(null,function(err){
-            logger.error(err);
-            UKalert(err);
-        })
-
-        UIkit.modal('#procModal').hide();
-        //UIkit.modal('#modalProgress').hide();
-    })
-    .output(outputFile)
-    .run();
-
-})
-
-d3.select("#convert").on('click',function(){
-
-    // 변환시작 -> 기존 progress 정보 삭제
-    d3.select('#progressBody').remove();
-
-    // progress HTML 생성
-    d3.select('#procModalBody')
-    .append('p')
-    .attr('id','progressBody')
-    .text('Converting Processed ')
-    .append('span')
-    .attr('id','progress')
-
-    // progress HTML에 cancel button 추가
-    d3.select('#procModalBody')
-    .select('p')     
-    .append('span')
-    .append('button')
-    .attr('id','cancel')
-    .classed('uk-button',true)
-    .classed('uk-button-small',true)
-    .classed('uk-button-primary',true)
-    .classed('uk-position-center-right',true)
-    .classed('uk-position-medium', true)
-    .text('변환취소')
-   
-    // output 파일 postfix를 위한 현재 timestamp 구하기
-    var now = new Date();
-
-    // output 파일 fullname 설정
-    var origFname = d3.select('#videoPlayer').attr('src');
-    if(!origFname){
-        UKalert('먼저 소스 영상을 drag & drop 하시기 바랍니다.')
-        logger.error('변환 대상 파일 없음!')
-        return false;
-    }
-    var origPath = path.dirname(origFname);
-    var origExtn = path.extname(origFname);
-    var origBase = path.basename(origFname,origExtn);
-    var convBase = origBase + '_' + now.getTime();
-    var convFname = path.join(origPath,convBase) + origExtn;
-    //
-
-    logger.info('convert start : %s', origFname);
-    
-    var command = ffmpeg(origFname)
-        .videoCodec('libx264')
-        .on('start', function(commandLine) {
-            UIkit.modal('#procModal').show();
-            disableDropOnBody();
-            logger.info('Spawned Ffmpeg with command: ' + commandLine);
-            d3.select('button.load-conv').remove();
-            d3.select('#afterPanelStream').text('변환후 Video 정보');
-            d3.select('#afterPanelFormat').text('변환후 Format 정보')
-            d3.select('#cancel').on('click', function(){
-                d3.select('#modalProgress').text('취소중..');
-                command.kill();
-            })
-        })
-        .on('progress', function(progress) {
-            logger.info('Processing: ' + progress.percent + '% done');
-            d3.select('#progress').text(' : ' + progress.percent.toFixed(2) + '% ');
-        })
-        .on('stderr', function(stderrLine) {
-            logger.info('Stderr output: ' + stderrLine);
-        })
-        .on('error', function(err, stdout, stderr) {
-            logger.error('Cannot process video: ' + err.message);
-            UIkit.modal('#procModal').hide();
-            fs.unlink(convFname,function(err){
-                if(err) logger.error(err);
-                logger.info('file delete success! : %s', convFname);
-            })
-            enableDropOnBody();
-        })
-        .on('end', function(stdout, stderr) {
-            logger.info('Transcoding succeeded !');
-            //UIkit.modal('#modalProgress').hide();
-            UIkit.modal('#procModal').hide();
-            getMeta(convFname,function(err, streamInfo, formatInfo){              
-                var beforePanelElement = d3.select('#afterPanelStream');
-                var beforeformatElement = d3.select('#afterPanelFormat');
-        
-                putPanelInfo(beforePanelElement, streamInfo);
-                putPanelInfo(beforeformatElement, formatInfo);
-
-                var convDiv = d3.select('#conv');
-                convDiv.attr('fullname',convFname);
-                addLoadBtn(convDiv,'conv');
-                d3.select('.load-conv').dispatch('click');
-            })   
-            enableDropOnBody();  
-        })
-        .save(convFname);
-});
-
-function addLoadBtn(ele, from){
-
-    // load-orig, load-conv
-    var btnClass = 'load-' + from;
-    ele.append('button')
-    .classed('uk-button',true)
-    .classed('uk-button-primary',true)
-    .classed('uk-width-1-1',true)
-    .classed('panelBtn', true)
-    .classed(btnClass,true)
-    .text('Load')
-    .on('click',function(){
-        var fullname = ele.attr('fullname');
-        // set title
-        d3.select('#title').text(fullname);
-        // load video
-        d3.select('#videoPlayer').attr('src',fullname);    
-        d3.select('#videoPlayer').attr('from',from);  
-        // change active button color and text
-        var origBtnClass = 'load-orig';
-        var convBtnClass = 'load-conv';
-        d3.select(this)
-        .classed('uk-button-primary',false)
-        .classed('uk-button-secondary',true)
-        .text('Loaded');
-        
-        var prevBtnClass = btnClass == origBtnClass ? convBtnClass : origBtnClass;
-        d3.select('.' + prevBtnClass)
-        .classed('uk-button-secondary',false)
-        .classed('uk-button-primary',true)
-        .text('Load');       
-    })
-}
-
-function clearPanelInfo(elementArray){
-    elementArray.forEach(function(ele){
-        ele.selectAll('div').remove();
-    });
-}
-
-function putPanelInfo(ele, content){
-    ele.selectAll('div')
-    .data(content)
-    .enter()
-    .append('div')
-    .text(function(d){
-        return d.replace('{','').replace('}','')
-    })
-}
-
-
-
-// 발급요청중
-
-function showModal(msg){
-    var modalDiv = d3.select('#errorMsg');
-    modalDiv.text('');
-    modalDiv.text(msg);
-    //modalDiv.append('h2').text('발급요청중....')
-    UIkit.modal('#errorModal').show();
-}
-
-// 발급완료
-
-function hideModal(msg){
-    var modalDiv = d3.select('#errorMsg');
-    modalDiv.text('');
-    modalDiv.text(msg);
-    setTimeout(function(){
-        UIkit.modal('#errorModal').hide();
-    },1000)
-}
-
-logger.info('loading done!')
-*/

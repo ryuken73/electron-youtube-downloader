@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron ."
   },
-  "repository": "https://github.com/ryuken73/electron-youtube.git",
+  "repository": "https://github.com/ryuken73/electron-youtube-downloader.git",
   "keywords": [
     "Electron",
     "youtube",
