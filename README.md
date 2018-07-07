@@ -27,17 +27,19 @@ npm install
 npm start
 ```
 2. Wait for initial webview loading
+![Alt Text](https://github.com/ryuken73/electron-youtube-downloader/blob/master/images/initail_loading.jpg)
+
 
 3. Search video or audio
-![Alt Text](https://github.com/ryuken73/electron-mp4-viewer/blob/master/images/converting.jpg)
+![Alt Text](https://github.com/ryuken73/electron-youtube-downloader/blob/master/images/search.jpg)
 
 4. Add media you wand download
 - [mp3] for audio only
 - [mp4] for video
-![Alt Text](https://github.com/ryuken73/electron-mp4-viewer/blob/master/images/capture.jpg)
+![Alt Text](https://github.com/ryuken73/electron-youtube-downloader/blob/master/images/add_mp3_mp4.jpg)
   
 5. Click Download
-![Alt Text](https://github.com/ryuken73/electron-mp4-viewer/blob/master/images/ftpconfig.jpg)
+![Alt Text](https://github.com/ryuken73/electron-youtube-downloader/blob/master/images/download.jpg)
 
 
 ## License
