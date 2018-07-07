@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./uikit.min.css" />
+    <link rel="stylesheet" href="./render.css" />
+    <title>Fix Your mp4 (by ryuken @SBS)</title>
+  </head>
+  <body class="uk-light uk-background-secondary">
+
+    <div class="uk-section uk-section-small">
+      <div class="uk-container">
+        <div class="uk-grid-medium uk-child-width-expand" uk-grid>
+          <div class="uk-width-1-2">
+            <!-- <p class="uk-text-small" id="title">파일정보</p> -->
+            <button class="uk-button uk-button-text" id="title">파일정보</button>
+            <p class='uk-margin-small'></p> 
+            <video id="videoPlayer" width="100%" height="100%" controls></video>
+            <p></p> 
+            <div>
+              <div class="uk-text-center uk-child-width-expand" uk-grid>
+                <div>
+                  <button class="uk-button uk-button-default uk-width-1-1 uk-animation-scale-up" id="convert">변환</button>
+                </div>
+                <div>
+                  <button class="uk-button uk-button-default uk-width-1-1 uk-animation-scale-up" id="capture" disabled>캡쳐</button>
+                </div>
+                <!-- <button class="uk-button uk-width-1-4 uk-button-default uk-animation-scale-up" id="fileMgr" disabled>경로열기</button>-->
+                <div>
+                  <button class="uk-button uk-button-default uk-width-1-1 uk-animation-scale-up" id="upload" disabled>업로드</button>
+                </div>
+              </div>
+            </div>
+          </div>  <!-- end of first column -->
+
+          <div class="uk-width-1-4" id="orig">
+            <p class="uk-text-small">변환전</p>
+            <p class='uk-margin-small'></p> 
+            <div class='uk-textarea uk-height-small ' id="beforePanelStream"></div>
+            <p>
+            <div class='uk-textarea uk-height-small ' id="beforePanelFormat"></div>
+            <p class='uk-margin-small'></p> 
+          </div> <!-- end of second column -->
+
+          <div class="uk-width-1-4" id="conv">
+            <p class="uk-text-small">변환후</p>
+            <p class='uk-margin-small'></p> 
+            <div class='uk-textarea uk-height-small ' id="afterPanelStream"></div>
+            <p>
+            <div class='uk-textarea uk-height-small ' id="afterPanelFormat"></div>
+            <p class='uk-margin-small'></p> 
+          </div> <!-- end of third column -->
+        </div> <!-- grid end -->
+      </div> <!-- container end --> 
+
+      <p class='uk-margin-small'></p> 
+
+      <div class="uk-container"> 
+        <div uk-lightbox>
+        <!-- <ul class="uk-thumbnav" uk-lightbox></ul> -->
+          <ul class="uk-thumbnav"></ul>
+        </div>
+        <hr>
+
+        <p class='uk-margin-small'></p> 
+        <div class='uk-textarea uk-height-small' id="msgPanel"></div>
+      
+        <p class='uk-margin-small'></p> 
+        <div class="uk-grid-small" uk-grid>
+          <div class="uk-width-expand">
+            <div>IP <span><input class="uk-input uk-form-small uk-form-width-small"></input></span></div>
+          </div>
+          <div class="uk-width-expand">
+            <div>ID <span><input class="uk-input uk-form-small uk-form-width-small"></input></span></div>
+          </div>
+          <div class="uk-width-expand">
+              <div>PASSWD <span><input class="uk-input uk-form-small uk-form-width-small"></input></span></div>
+          </div>
+          <div class="uk-width-expand">
+              <div>PATH <span><input class="uk-input uk-form-small uk-form-width-medium"></input></span></div>
+          </div>
+        </div>
+      </div>  <!-- end of container #2 -->
+
+        <div id="errorModal" class="uk-flex-top" uk-modal='{"esc-close":true , "bg-close":false}'>
+            <div class="uk-modal-dialog uk-modal-body uk-background-secondary uk-margin-auto-vertical">
+               <button class="uk-modal-close-default" type="button" uk-close></button>
+               <p id="errorMsg"></p>
+            </div>
+        </div>  
+
+        <div id="procModal" class="uk-flex-top" uk-modal='{"esc-close":false , "bg-close":false}'>
+          <div id="procModalBody" class="uk-modal-dialog uk-modal-body uk-background-secondary uk-margin-auto-vertical">
+          </div>
+        </div>  
+      </div> <!-- container end -->
+    </div> <!-- section end -->
+    <script src="./uikit-icons.min.js"></script>
+    <script>
+      // You can also require other files to run in this process
+      require('./renderer.js')
+    </script>
+  </body>
+</html>

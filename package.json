@@ -1,0 +1,27 @@
+{
+  "name": "electron-youtube-downloader",
+  "version": "1.0.0",
+  "description": "YouTube downloader for Anne",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/ryuken73/electron-youtube.git",
+  "keywords": [
+    "Electron",
+    "youtube",
+    "downloader",
+    "UIkit"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^2.0.0"
+  },
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2",
+    "node-thumbnail": "^0.14.0",
+    "tracer": "^0.8.15",
+    "ytdl-core": "^0.20.4"
+  }
+}

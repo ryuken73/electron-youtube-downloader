@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html class="uk-light uk-background-secondary">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./uikit.min.css" />
+    <link rel="stylesheet" href="./render.css" />
+    <title>Youtube Downloader (by ryuken)</title>
+  </head>
+  <body>
+      <div class="uk-section uk-section-small">
+          <div class="uk-container">
+            <div class="uk-grid uk-grid-small uk-child-width-expand" uk-grid>
+              <div class="uk-text-small uk-width-1-3">
+                <input class="uk-input uk-form-small" id="address"></input>
+              </div>
+              <div class="uk-width-auto">
+                <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="loadURL">go</div>
+              </div>
+              <div class="uk-width-auto">
+                <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="addMP3">add mp3</div>
+              </div>
+              <div class="uk-width-auto">
+                <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="addMP4">add mp4</div>
+              </div>
+            </div>             
+
+            <div class="uk-grid-small uk-child-width-expand" id="top" uk-grid>
+              <div class="uk-width-1-3">
+                <webview id="browser" src="https://www.youtube.com/" allowpopups plugins webpreferences="nativeWindowOpen" style="display:flex;" class="uk-height-large"></webview>
+              </div>  
+              <div>
+                <div class="uk-panel uk-panel-scrollable uk-height-large uk-text-small" id="mediaPannel">
+                </div>
+              </div>  
+
+            </div>
+
+
+
+          </div> 
+          
+          <div class="uk-container">
+            <div class="uk-grid-small" uk-grid>
+              <div class='uk-text-large uk-width-1-6' id="zoomIn">+</div>
+              <div class='uk-text-large uk-width-1-6' id="zoomOut">-</div>
+            </div>
+          </div>
+          <p class='uk-margin-small'></p> 
+
+          
+          <div class="uk-container"> 
+            <p class='uk-margin-small'></p> 
+            <div class='uk-textarea uk-height-small' id="msgPanel"></div>
+          
+          </div>  <!-- end of container #2 -->
+    
+            <div id="errorModal" class="uk-flex-top" uk-modal='{"esc-close":true , "bg-close":false}'>
+                <div class="uk-modal-dialog uk-modal-body uk-background-secondary uk-margin-auto-vertical">
+                   <button class="uk-modal-close-default" type="button" uk-close></button>
+                   <p id="errorMsg"></p>
+                </div>
+            </div>  
+    
+            <div id="procModal" class="uk-flex-top" uk-modal='{"esc-close":true , "bg-close":false}'>
+              <div id="procModalBody" class="uk-modal-dialog uk-modal-body uk-margin-auto-vertical uk-background-secondary">
+                  <button class="uk-modal-close-default" type="button" uk-close></button>
+              </div>
+            </div>  
+          </div> <!-- container end -->
+        </div> <!-- section end -->
+
+    <script src="./uikit-icons.min.js"></script>
+    <script>
+      // You can also require other files to run in this process
+      require('./renderer.js')
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+.uk-textarea {
+    font-size : 10px;
+    height : 160px;
+}
+
+body, .uk-button, .uk-pannel, #mediaPannel, .uk-label {
+    font-size : 11px;
+}
+
+textarea {
+    overflow-y:scroll;
+    height : 100px;
+    resize : none;
+}
+
+.uk-label {
+    pointer-events: auto !important;
+    cursor: pointer;
+  }
