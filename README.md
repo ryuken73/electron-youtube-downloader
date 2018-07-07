@@ -1,13 +1,11 @@
 # Simple Youtube Downloader
 
-**Can download prebuilt binary for Windows from here And Test**
+**Can download prebuilt binary from release**
 
 This is a Simple Youtube downloader written in electron
  (can download mp3(audio) and mp4(video)) 
 
-**If you need to download many clips this can be helpful**
-
-**This application strongly depends on [ytdl-core.](https://github.com/fent/node-ytdl-core)**
+**This application deeply depends on [ytdl-core.](https://github.com/fent/node-ytdl-core)**
 
 Use below modules
 
