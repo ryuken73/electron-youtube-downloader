@@ -9,6 +9,8 @@ var prcoess = require('process');
 var fs = require('fs');
 const ytdl = require('ytdl-core');
 const {shell} = require('electron');
+var {remote} = require('electron');
+var ffmpeg = require('fluent-ffmpeg');
 
 var cwd = process.cwd();
 var mediaID = 0;
@@ -45,6 +47,16 @@ var logger = tracer.console(
 			}
 ); 
 
+// setup ffmpeg path
+var appPath = remote.app.getAppPath();
+logger.info('appPath : %s', appPath);
+
+var ffmpegPath = path.join(appPath, '../bin');
+var ffmpegBin  = 'ffmpeg.exe';
+var ffprobeBin = 'ffprobe.exe';
+
+ffmpeg.setFfmpegPath(path.join(ffmpegPath,  ffmpegBin));
+ffmpeg.setFfprobePath(path.join(ffmpegPath, ffprobeBin));
 
 function UKlogger(msg){
     d3.select('#msgPanel')
@@ -223,7 +235,7 @@ function addPannel(options){
         }          
 
         download(downloadOpts, cancelHandler, abortHandler, function(fullname){
-            logger.info('download callback called!')
+            logger.info(`[${downloadOpts.type}]download callback called!`)
             d3.select(downloadBTN).on('click',null);
             d3.select(downloadBTN).text('PLAY');
             d3.select(downloadBTN).on('click',function(){     
@@ -232,6 +244,12 @@ function addPannel(options){
             })      
             procDivToDone(id);
             operDivToOpen(id, fullname);
+            const extForIOS = 'mp4';
+            if(downloadOpts.type === 'mp3'){
+                audioToMP4(fullname, extForIOS, id, function(mID){
+                    procDivToDone(mID);
+                })    
+            }
         });      
     }
 }
@@ -402,4 +420,50 @@ function download(options, addCancelHandler, addAbortHandler, done){
     })
     */
 
+}
+
+function audioToMP4(fullname, customExtn, mediaID, done){
+    logger.info('audioToMP4 start : %s', fullname);
+    // output 파일 postfix를 위한 현재 timestamp 구하기
+    var now = new Date();
+
+    const origFname = fullname;
+    const origPath = path.dirname(origFname);
+    const origExtn = path.extname(origFname);
+    const origBase = path.basename(origFname,origExtn);
+    const convBase = origBase + '_' + now.getTime();
+
+    var ext = customExtn ? '.' + customExtn : 'mp4'
+    var convFname = path.join(origPath,convBase) + ext;
+
+    var origSize = fs.statSync(origFname).size;
+    var startTime = new Date();
+    var startMSec = startTime.getTime();
+    
+    var command = ffmpeg(origFname)
+        .on('start', function(commandLine) {
+            logger.info('convert start');
+            logger.info('Spawned Ffmpeg with command: ' + commandLine);
+        })
+        .on('progress', function(progress) {
+            const percentString = progress.percent.toFixed(2) +'%';          
+            var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+            badge.text(percentString);  
+        })
+        .on('stderr', function(stderrLine) {
+            logger.info('Stderr output: ' + stderrLine);
+        })
+        .on('error', function(err, stdout, stderr) {
+            logger.error('Cannot process video: ' + err.message);
+            fs.unlink(convFname,function(err){
+                if(err) logger.error(err);
+                logger.info('file delete success! : %s', convFname);
+            })
+        })
+        .on('end', function(stdout, stderr) {
+            logger.info('Transcoding succeeded !');
+            //UIkit.modal('#modalProgress').hide();
+            done(mediaID);
+        })
+        .save(convFname);
 }
