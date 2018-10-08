@@ -425,7 +425,7 @@ function download(options, addCancelHandler, addAbortHandler, done){
 function audioToMP4(fullname, customExtn, mediaID, done){
     logger.info('audioToMP4 start : %s', fullname);
     // output 파일 postfix를 위한 현재 timestamp 구하기
-    var now = new Date();
+    const now = new Date();
 
     const origFname = fullname;
     const origPath = path.dirname(origFname);
@@ -433,21 +433,19 @@ function audioToMP4(fullname, customExtn, mediaID, done){
     const origBase = path.basename(origFname,origExtn);
     const convBase = origBase + '_' + now.getTime();
 
-    var ext = customExtn ? '.' + customExtn : 'mp4'
-    var convFname = path.join(origPath,convBase) + ext;
+    const ext = customExtn ? '.' + customExtn : 'mp4'
+    const convFname = path.join(origPath,convBase) + ext;
 
-    var origSize = fs.statSync(origFname).size;
-    var startTime = new Date();
-    var startMSec = startTime.getTime();
+    const startTime = new Date();
     
-    var command = ffmpeg(origFname)
+    let command = ffmpeg(origFname)
         .on('start', function(commandLine) {
             logger.info('convert start');
             logger.info('Spawned Ffmpeg with command: ' + commandLine);
         })
         .on('progress', function(progress) {
             const percentString = progress.percent.toFixed(2) +'%';          
-            var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+            const badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
             badge.text(percentString);  
         })
         .on('stderr', function(stderrLine) {
