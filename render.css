@@ -16,4 +16,8 @@ textarea {
 .uk-label {
     pointer-events: auto !important;
     cursor: pointer;
-  }
+ }
+
+ #address {
+     font-size : 11px;
+ }
