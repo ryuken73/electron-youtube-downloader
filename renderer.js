@@ -2,23 +2,38 @@
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 
-var d3 = require('./d3.min.js');
-var UIkit = require('./uikit.min.js');
-var path = require('path');
-var prcoess = require('process');
-var fs = require('fs');
+const d3 = require('./d3.min.js');
+const UIkit = require('./uikit.min.js');
+const path = require('path');
+const prcoess = require('process');
+const fs = require('fs');
 const ytdl = require('ytdl-core');
 const {shell} = require('electron');
-var {remote} = require('electron');
-var ffmpeg = require('fluent-ffmpeg');
+const {remote} = require('electron');
+const {ipcRenderer} = require('electron');
+const ffmpeg = require('fluent-ffmpeg');
 
 // var cwd = process.cwd();
 global.downloadPath = remote.app.getPath('downloads');
-var mediaID = 0;
+d3.select('#downloadPath').property('value',global.downloadPath);
+const chgPathBtn = d3.select('#chgPath');
+chgPathBtn.on('click', () => {
+    logger.debug('change path btn clicked');
+    ipcRenderer.send('open-file-dialog');
+})
+ipcRenderer.on('selected-directory', (event, path) => {
+    global.downloadPath = path[0];
+    d3.select('#downloadPath').property('value',global.downloadPath);
+})
 
-var tracer = require('tracer');
-var logLevel = 'trace';
-var logger = tracer.console(
+
+
+
+let mediaID = 0;
+
+const tracer = require('tracer');
+const logLevel = 'trace';
+const logger = tracer.console(
     {
         format : "{{timestamp}} [{{title}}][{{method}}] {{message}} (in {{file}}:{{line}})",	
         dateformat: 'yyyy-mm-dd HH:MM:ss',
@@ -96,13 +111,13 @@ function UKlogger(msg){
     .append('div')
     .text(msg)
 
-    var msgPanel = d3.select('#msgPanel');
+    const msgPanel = d3.select('#msgPanel');
     console.log('height : ' + msgPanel.property('scrollHeight'));
     d3.select('#msgPanel').property('scrollTop', msgPanel.property('scrollHeight'));
 }
 
 function UKalert(msg){
-    var modalDiv = d3.select('#errorMsg');
+    const modalDiv = d3.select('#errorMsg');
     modalDiv.text(msg);
     UIkit.modal('#errorModal').show();
 }
@@ -111,7 +126,7 @@ const zoomFactor = 0.75;
 
 d3.select('webview').on('dom-ready', function(){
     // when page load finished, update address bar
-    var url = webview.getURL();
+    const url = webview.getURL();
     logger.info('d3 object event handler on')
     d3.select('#address').property('value', url);
     webview.setZoomFactor(zoomFactor);
@@ -121,7 +136,7 @@ d3.select('webview').on('dom-ready', function(){
 d3.select('webview').on('did-finish-load',function(d,i,n){
     logger.info('load done');
     document.getElementById('browser').addEventListener('did-navigate-in-page', function(ev){
-        var url = ev.url;
+        const url = ev.url;
         logger.info('did-navigate-in-page url : %s', url);
         d3.select('#address').property('value', url);
     })
@@ -129,7 +144,7 @@ d3.select('webview').on('did-finish-load',function(d,i,n){
 
 
 d3.select('#loadURL').on('click',function(){
-    var url = d3.select('#address').property('value');
+    const url = d3.select('#address').property('value');
     webview.loadURL(url);
 })
 
@@ -174,7 +189,7 @@ function addPannel(options){
     options.fname = fname; 
     options.fullname = fullname;
 
-    var row = d3.select(pannelID)
+    const row = d3.select(pannelID)
     .append('div')
     .classed('uk-grid',true)
     .classed('uk-grid-small',true)
@@ -192,13 +207,13 @@ function addPannel(options){
     });
 
     // add title Button
-    var titleDiv = row.append('div').classed('uk-width-expand',true).classed('titleDiv',true).attr('mediaID',mediaID);
+    const titleDiv = row.append('div').classed('uk-width-expand',true).classed('titleDiv',true).attr('mediaID',mediaID);
     titleDiv.append('div')
     .classed('uk-animation-slide-top-small',true)
     .text(rowHead)
 
     // add progress
-    var progressDiv = row.append('div').classed('uk-width-auto',true).classed('progressDiv',true).attr('mediaID',mediaID);
+    const progressDiv = row.append('div').classed('uk-width-auto',true).classed('progressDiv',true).attr('mediaID',mediaID);
     progressDiv
     .append('div')
     .append('span')
@@ -224,9 +239,12 @@ function addPannel(options){
 const downloadClicked = function(downloadBTN, downloadOpts){
 
     const {mediaID, url, type, fname, fullname} = downloadOpts; 
+    //changeUI(mediaID, 'downloading');
+    d3.select(downloadBTN).text('requesting..');
 
     download(downloadOpts, cancelHandler(downloadBTN), abortHandler(downloadBTN, downloadOpts), function(fullname){
         logger.info(`[${downloadOpts.type}]download callback called!`)
+        changeUI(mediaID, 'done');
         d3.select(downloadBTN).on('click',null);
         d3.select(downloadBTN).text('PLAY');
         d3.select(downloadBTN).on('click',function(){     
@@ -252,7 +270,7 @@ function download(options, addCancelHandler, addAbortHandler, done){
     const fname = options.fname;
     const fullname = options.fullname;
 
-    var typeOptions = {
+    const typeOptions = {
         'mp3' : {
             'ext' : '.mp3',
             'ytdlOpts' : {
@@ -270,8 +288,8 @@ function download(options, addCancelHandler, addAbortHandler, done){
 
     logger.info('download to %s',fullname );
    
-    var downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
-    var fileWriteStream = fs.createWriteStream(fullname);
+    const downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
+    const fileWriteStream = fs.createWriteStream(fullname);
     
     downloadStream.pipe(fileWriteStream);     
 
@@ -294,17 +312,18 @@ function download(options, addCancelHandler, addAbortHandler, done){
         logger.info(msg.statusCode);
         if(msg.statusCode === 200){
             logger.info('request OK!')
+            changeUI(mediaID, 'downloading');
             addCancelHandler(downloadStream, fullname);
         }
     })
 
     downloadStream.on('progress',function(length,totalDownloaded,totalDownloadedLength){
         
-        var percent = (totalDownloaded / totalDownloadedLength) * 100;
-        var percentString = percent.toFixed(2) + '%'
-        //logger.info('processed : %s', percentString);
+        const percent = (totalDownloaded / totalDownloadedLength) * 100;
+        const percentString = percent.toFixed(2) + '%'
+        //logger.info('processed : %s', totalDownloaded);
 
-        var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+        const badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
         badge.text(percentString);
 
         if(totalDownloaded == totalDownloadedLength){
@@ -346,11 +365,8 @@ const abortHandler = function(downloadBTN, downloadOpts) {
 
     return function(downloadStream,fullname){
         logger.info('run abort handler');
-    
-        d3.select('.progressDiv')
-        .select('.uk-label')
-        .text('0%')
-    
+        const {mediaID} = downloadOpts;
+            
         logger.info('delete file')
         fs.unlink(fullname,function(err){
             if(err){
@@ -359,7 +375,11 @@ const abortHandler = function(downloadBTN, downloadOpts) {
                 logger.info('delete %s success ', fullname)
             }
         });
+
+        const badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+        badge.text('0%');
     
+        changeUI(mediaID, 'init');
         d3.select(downloadBTN).on('click',null);
         d3.select(downloadBTN).text('DOWNLOAD');
         d3.select(downloadBTN).on('click', function(){
@@ -368,6 +388,38 @@ const abortHandler = function(downloadBTN, downloadOpts) {
     } 
 
 }
+
+function changeUI(mediaID, state) {
+    const row = d3.select('div.mediaRow[mediaID="' + mediaID + '"]');
+    const downloadBtn = row.select('div.downloadDiv').select('div.uk-label');
+    const progressBtn = row.select('div.progressDiv').select('div').select('span');
+    const operationBtn = row.select('div.operationDiv').select('div').select('span');
+    const buttons = [downloadBtn, progressBtn, operationBtn];
+
+    switch(state) {
+        case 'init' :
+            buttons.map((button) => {
+                button.classed('downloading', false);
+                button.classed('done', false)
+                button.classed('init', true);
+            })
+            break;
+        case 'downloading' :
+            buttons.map((button) => {
+                button.classed('done', false);
+                button.classed('init', false)
+                button.classed('downloading', true);
+            })
+            break;
+        case 'done' :
+            buttons.map((button) => {
+                button.classed('downloading', false);
+                button.classed('init', false)
+                button.classed('done', true);
+            })
+            break;
+    }   
+}
     
 
 
@@ -375,7 +427,7 @@ const abortHandler = function(downloadBTN, downloadOpts) {
 
 // process div change when download finished
 function procDivToDone(mediaID){
-    var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+    const badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
     badge.classed('uk-label-warning',false);
     badge.classed('uk-label-default',true);
     badge.text('Done');   
@@ -383,7 +435,7 @@ function procDivToDone(mediaID){
 
 // operation div change when download finished
 function operDivToOpen(mediaID, fullname){
-    var operbadge = d3.select('div.operationDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+    const operbadge = d3.select('div.operationDiv[mediaID="' + mediaID + '"]').select('div').select('span');
     operbadge.on('click', null);
     operbadge.on('click', function(){
         logger.info('open file manager')
@@ -401,7 +453,7 @@ function validate(url){
         return false;
     }
 
-    var vid = ytdl.getURLVideoID(url);
+    const vid = ytdl.getURLVideoID(url);
     if(!ytdl.validateID(vid)){
         return false;
     }
@@ -409,7 +461,7 @@ function validate(url){
 }
 
 function clearModal(modalID){
-    var selector = '#' + modalID;
+    const selector = '#' + modalID;
     d3.select(selector).remove();
 }
 
@@ -434,19 +486,19 @@ function getMediaInfo(url,type,callback){
         logger.info(info.length_seconds);
         //logger.info(info.formats)
         info.formats.forEach(function(format){
-            var type = format.type;
-            var quality = format.quality;
-            var url = format.url;
-            var container = format.container;
-            var encoding = format.encoding;
-            var profile = format.profile;
+            const type = format.type;
+            const quality = format.quality;
+            const url = format.url;
+            const container = format.container;
+            const encoding = format.encoding;
+            const profile = format.profile;
             //logger.info(type,quality,container,encoding,profile);
 
         })
         mediaID += 1;
         UIkit.modal('#procModal').hide(); 
         clearModal('getInfo');
-        var opts = {url:url, title:info.title, type:type, duration:info.length_seconds, mediaID:mediaID};
+        const opts = {url:url, title:info.title, type:type, duration:info.length_seconds, mediaID:mediaID};
         callback(opts);
     })
     .then(null, function(err){

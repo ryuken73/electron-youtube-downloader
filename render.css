@@ -18,7 +18,7 @@ textarea {
     cursor: pointer;
  }
 
- #address {
+ #address, #downloadPath {
      font-size : 11px;
  }
 
@@ -29,3 +29,13 @@ textarea {
  .uk-label:hover {
      background-color: gainsboro;
  }
+
+.downloading {
+    background-color: rebeccapurple !important;
+    color:white !important;
+}
+
+.done {
+    background-color: cyan !important;
+    color:black !important;
+}
