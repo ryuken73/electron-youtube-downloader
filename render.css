@@ -21,3 +21,11 @@ textarea {
  #address {
      font-size : 11px;
  }
+
+ .icon:hover, #addMP3:hover, #addMP4:hover {
+     background-color : gray;
+ }
+
+ .uk-label:hover {
+     background-color: gainsboro;
+ }

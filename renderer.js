@@ -12,51 +12,84 @@ const {shell} = require('electron');
 var {remote} = require('electron');
 var ffmpeg = require('fluent-ffmpeg');
 
-var cwd = process.cwd();
+// var cwd = process.cwd();
+global.downloadPath = remote.app.getPath('downloads');
 var mediaID = 0;
 
 var tracer = require('tracer');
 var logLevel = 'trace';
 var logger = tracer.console(
-			{
-				format : "{{timestamp}} [{{title}}][{{method}}] {{message}} (in {{file}}:{{line}})",	
-				dateformat: 'yyyy-mm-dd HH:MM:ss',
-				level:logLevel,
-				transport : [
-                    /*
-					function(data){
-						fs.appendFile(logFile, data.output + '\n', function(err){
-							if(err) {
-								throw err;
-							}
-						});
-                    },
-                    */
-					function(data){
-						console.log(data.output);
-                    },
-                    function(data){
-                        UKlogger(data.output);
-                    }
-                    /*,
-					function(data){
-						mailNotification('error', data);
-                    }
-                    */				
-				]
-			}
+    {
+        format : "{{timestamp}} [{{title}}][{{method}}] {{message}} (in {{file}}:{{line}})",	
+        dateformat: 'yyyy-mm-dd HH:MM:ss',
+        level:logLevel,
+        transport : [
+            function(data){
+                console.log(data.output);
+            },
+            function(data){
+                UKlogger(data.output);
+            }
+
+        ]
+    }
 ); 
 
+const webview = d3.select('webview').node();
+const backBtn = d3.select('#goBack');
+const forwardBtn = d3.select('#goForward');
+const refreshBtn = d3.select('#refresh');
+const addMP3Btn = d3.select('#addMP3');
+const addMP4Btn = d3.select('#addMP4');
+
+backBtn.on('click', () => {
+    webview.goBack();
+})
+
+forwardBtn.on('click', () => {
+    webview.goForward();
+})
+
+refreshBtn.on('click', () => {
+    webview.reload();
+})
+
+addClickEffect([backBtn, forwardBtn, refreshBtn, addMP3Btn, addMP4Btn]);
+
+function addClickEffect(tgt){
+
+    const elements = typeof(tgt) === 'object' ? tgt : [tgt];
+
+    for(let element of elements){
+        element.on('mousedown', () => {
+            console.log('mousedown');
+            element.style('transform', 'translateY(5%)')
+        })
+        
+        element.on('mouseup', () => {
+            console.log('mouseup')
+            element.transition().style('transform', 'translateY(-5%)')
+        })
+
+    }
+}
+
+function getFullname(fname) {
+    return path.join(global.downloadPath, fname);
+}
+
 // setup ffmpeg path
-var appPath = remote.app.getAppPath();
+const appPath = remote.app.getAppPath();
 logger.info('appPath : %s', appPath);
 
-var ffmpegPath = path.join(appPath, '../bin');
-var ffmpegBin  = 'ffmpeg.exe';
-var ffprobeBin = 'ffprobe.exe';
+const ffmpegPath = path.join(appPath, '../bin');
+const ffmpegBin  = 'ffmpeg.exe';
+const ffprobeBin = 'ffprobe.exe';
 
 ffmpeg.setFfmpegPath(path.join(ffmpegPath,  ffmpegBin));
 ffmpeg.setFfprobePath(path.join(ffmpegPath, ffprobeBin));
+
+// setup UKlogger
 
 function UKlogger(msg){
     d3.select('#msgPanel')
@@ -74,9 +107,7 @@ function UKalert(msg){
     UIkit.modal('#errorModal').show();
 }
 
-var webview = d3.select('webview').node();
-var zoomFactor = 0.75;
-
+const zoomFactor = 0.75;
 
 d3.select('webview').on('dom-ready', function(){
     // when page load finished, update address bar
@@ -103,11 +134,11 @@ d3.select('#loadURL').on('click',function(){
 })
 
 
-d3.select('#addMP3').on('click',function(){
+addMP3Btn.on('click',function(){
     // from getMediaInfo, get source URL
     // and then append new row in Pannel
-    var type = 'mp3';
-    var url = d3.select('#address').property('value');
+    const type = 'mp3';
+    const url = d3.select('#address').property('value');
     logger.info(url);
     if(!validate(url)){
         UKalert('Not valid Youtube Url. check Url');        
@@ -116,10 +147,10 @@ d3.select('#addMP3').on('click',function(){
     }
 })
 
-d3.select('#addMP4').on('click',function(){
+addMP4Btn.on('click',function(){
 
-    var type = 'mp4';
-    var url = d3.select('#address').property('value');
+    const type = 'mp4';
+    const url = d3.select('#address').property('value');
     logger.info(url);
     if(!validate(url)){
         UKalert('Not valid Youtube Url. check Url');        
@@ -130,46 +161,44 @@ d3.select('#addMP4').on('click',function(){
 
 function addPannel(options){
 
-    var id   = options.mediaID;
-    var url  = options.url;
-    var type = options.type;
-    var duration = options.duration;
-    var cleanTitle = options.title.replace(/["<>/:%*?|\\]/g, "");
-    var rowHead = '[' + type + ']' + cleanTitle + ' - ' + duration + 'sec';
-    var pannelID = '#mediaPannel';
-    var fname = cleanTitle + '.' + type;
+    const mediaID   = options.mediaID;
+    const url  = options.url;
+    const type = options.type;
+    const duration = options.duration;
+    const cleanTitle = options.title.replace(/["<>/:%*?|\\]/g, "");
+    const rowHead = '[' + type + ']' + cleanTitle + ' - ' + duration + 'sec';
+    const pannelID = '#mediaPannel';
+    const fname = cleanTitle + '.' + type;
+    const fullname = getFullname(fname);
 
-    options.fname = fname; // to use onDownload
+    options.fname = fname; 
+    options.fullname = fullname;
 
     var row = d3.select(pannelID)
     .append('div')
     .classed('uk-grid',true)
     .classed('uk-grid-small',true)
     .classed('mediaRow',true)
-    .attr('mediaID', id)
+    .attr('mediaID', mediaID)
     .attr('uk-grid','')  
 
     // add download button
-    var downloadDiv = row.append('div').classed('uk-width-1-6',true).classed('downloadDiv',true).attr('mediaID',id);
-    downloadDiv.append('div')
-    .classed('uk-label',true)
-    .classed('uk-label-success',true)
-    .classed('uk-width-1-1',true)
-    .classed('uk-text-center',true)
-    .classed('uk-animation-slide-left-small',true)
-    .text('download')
-    .on('click',function(){
-        onDownload(this, options)
+    const downloadDiv = row.append('div').classed('uk-width-1-6',true).classed('downloadDiv',true).attr('mediaID',mediaID);
+    const downloadBTN = downloadDiv.append('div').classed('uk-label uk-label-success uk-width-1-1 uk-text-center uk-animation-slide-left-small',true);
+
+    downloadBTN.text('download')
+    downloadBTN.on('click',function(){
+        downloadClicked(this, options)
     });
 
     // add title Button
-    var titleDiv = row.append('div').classed('uk-width-expand',true).classed('titleDiv',true).attr('mediaID',id);
+    var titleDiv = row.append('div').classed('uk-width-expand',true).classed('titleDiv',true).attr('mediaID',mediaID);
     titleDiv.append('div')
     .classed('uk-animation-slide-top-small',true)
     .text(rowHead)
 
     // add progress
-    var progressDiv = row.append('div').classed('uk-width-auto',true).classed('progressDiv',true).attr('mediaID',id);
+    var progressDiv = row.append('div').classed('uk-width-auto',true).classed('progressDiv',true).attr('mediaID',mediaID);
     progressDiv
     .append('div')
     .append('span')
@@ -179,80 +208,170 @@ function addPannel(options){
     .text('0%')
 
     // add last button
-    var operationDiv = row.append('div').classed('uk-width-auto',true).classed('operationDiv',true).attr('mediaID',id);
-    operationDiv
-    .append('div')
-    .append('span')
-    .classed('uk-label',true)
-    .classed('uk-label-warning',true)
-    .classed('uk-animation-slide-right-small',true)
-    .text('DELE')
-    .on('click',function(){
+    const operationDiv = row.append('div').classed('uk-width-auto',true).classed('operationDiv',true).attr('mediaID',mediaID);
+    const operationBTN = operationDiv.append('div').append('span');
+    operationBTN.classed('uk-label uk-label-warning uk-animation-slide-right-small',true);
+    operationBTN.text('DELE')
+    operationBTN.on('click',function(){
         row.remove();
     });   
-    
-    // download button handler
-    var onDownload = function(downloadBTN, downloadOpts){
 
-        var downloadOpts = {
-            id : id,
-            url : url,
-            type : type,
-            fname : fname
+    addClickEffect([downloadDiv, operationDiv]) 
+
+}
+
+// download button handler
+const downloadClicked = function(downloadBTN, downloadOpts){
+
+    const {mediaID, url, type, fname, fullname} = downloadOpts; 
+
+    download(downloadOpts, cancelHandler(downloadBTN), abortHandler(downloadBTN, downloadOpts), function(fullname){
+        logger.info(`[${downloadOpts.type}]download callback called!`)
+        d3.select(downloadBTN).on('click',null);
+        d3.select(downloadBTN).text('PLAY');
+        d3.select(downloadBTN).on('click',function(){     
+            logger.info('playing media!');
+            shell.openItem(fullname);
+        })      
+        procDivToDone(mediaID);
+        operDivToOpen(mediaID, fullname);
+        const extForIOS = 'mp4';
+        if(downloadOpts.type === 'mp3'){
+            audioToMP4(fullname, extForIOS, mediaID, function(mID){
+                procDivToDone(mID);
+            })    
         }
+    });      
+}
 
-        var cancelHandler = function(downloadStream,fname){
-            logger.info('register cancel handler');
-            d3.select(downloadBTN).on('click',null);
-            d3.select(downloadBTN).text('CANCEL');
-            d3.select(downloadBTN).on('click',function(){
-                logger.info('stop downloading');
-                downloadStream.destroy();
-            })
-        }
+function download(options, addCancelHandler, addAbortHandler, done){
 
-        var abortHandler = function(downloadStream,fname){
-            logger.info('register abort handler');
+    const mediaID = options.mediaID;
+    const url  = options.url;
+    const type = options.type;
+    const fname = options.fname;
+    const fullname = options.fullname;
 
-            d3.select('.progressDiv')
-            .select('.uk-label')
-            .text('0%')
-
-            logger.info('delete file')
-            fs.unlink(fname,function(err){
-                if(err){
-                    logger.error('error delete %s : %j', fname, err);
-                } else {
-                    logger.info('delete %s success ', fname)
-                }
-            });
-
-            d3.select(downloadBTN).on('click',null);
-            d3.select(downloadBTN).text('DOWNLOAD');
-            d3.select(downloadBTN).on('click', function(){
-                onDownload(downloadBTN, downloadOpts)
-            })
-        }          
-
-        download(downloadOpts, cancelHandler, abortHandler, function(fullname){
-            logger.info(`[${downloadOpts.type}]download callback called!`)
-            d3.select(downloadBTN).on('click',null);
-            d3.select(downloadBTN).text('PLAY');
-            d3.select(downloadBTN).on('click',function(){     
-                logger.info('playing media!');
-                shell.openItem(fullname);
-            })      
-            procDivToDone(id);
-            operDivToOpen(id, fullname);
-            const extForIOS = 'mp4';
-            if(downloadOpts.type === 'mp3'){
-                audioToMP4(fullname, extForIOS, id, function(mID){
-                    procDivToDone(mID);
-                })    
+    var typeOptions = {
+        'mp3' : {
+            'ext' : '.mp3',
+            'ytdlOpts' : {
+                'filter' : 'audioonly'
             }
-        });      
+        },
+        'mp4' : {
+            'ext' : '.mp4',
+            'ytdlOpts' : {
+                'filter' : 'audioandvideo'
+            }           
+        }
+    }
+
+
+    logger.info('download to %s',fullname );
+   
+    var downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
+    var fileWriteStream = fs.createWriteStream(fullname);
+    
+    downloadStream.pipe(fileWriteStream);     
+
+    //onCancel(downloadStream);
+
+    fileWriteStream.on('close',function(err){
+        logger.info('fie write closed!');
+    })
+
+    fileWriteStream.on('error',function(err){
+        logger.info('file write error');
+    })
+
+    fileWriteStream.on('finish',function(err){
+        logger.info('file write finish')
+    })
+
+    downloadStream.on('response',function(msg){
+        logger.info('downloadStream response done');
+        logger.info(msg.statusCode);
+        if(msg.statusCode === 200){
+            logger.info('request OK!')
+            addCancelHandler(downloadStream, fullname);
+        }
+    })
+
+    downloadStream.on('progress',function(length,totalDownloaded,totalDownloadedLength){
+        
+        var percent = (totalDownloaded / totalDownloadedLength) * 100;
+        var percentString = percent.toFixed(2) + '%'
+        //logger.info('processed : %s', percentString);
+
+        var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
+        badge.text(percentString);
+
+        if(totalDownloaded == totalDownloadedLength){
+            logger.info('download complete!');
+            //var fullname = path.join(DEFAULTPATH, fname);
+            done(fullname);
+
+            //addPreview(options.type, fullname, options.mediaID);
+        }
+    })   
+
+    downloadStream.on('abort',function(){
+        logger.info('downloadStream abort fire!');
+        fileWriteStream.destroy();
+        addAbortHandler(downloadStream, fullname);
+    })
+    /*
+    downloadStream.on('abort', function(err){
+        logger.info('download canceled');
+    })
+    */
+
+}
+
+const cancelHandler = function(downloadBTN) {
+    return  function(downloadStream,fullname){
+        logger.info('register cancel handler');
+        d3.select(downloadBTN).on('click',null);
+        d3.select(downloadBTN).text('CANCEL');
+        d3.select(downloadBTN).on('click',function(){
+            logger.info('stop downloading');
+            downloadStream.destroy();
+        })
     }
 }
+
+
+const abortHandler = function(downloadBTN, downloadOpts) {
+
+    return function(downloadStream,fullname){
+        logger.info('run abort handler');
+    
+        d3.select('.progressDiv')
+        .select('.uk-label')
+        .text('0%')
+    
+        logger.info('delete file')
+        fs.unlink(fullname,function(err){
+            if(err){
+                logger.error('error delete %s : %j', fullname, err);
+            } else {
+                logger.info('delete %s success ', fullname)
+            }
+        });
+    
+        d3.select(downloadBTN).on('click',null);
+        d3.select(downloadBTN).text('DOWNLOAD');
+        d3.select(downloadBTN).on('click', function(){
+            downloadClicked(downloadBTN, downloadOpts)
+        })
+    } 
+
+}
+    
+
+
+
 
 // process div change when download finished
 function procDivToDone(mediaID){
@@ -338,89 +457,7 @@ function getMediaInfo(url,type,callback){
     })
 }
 
-function download(options, addCancelHandler, addAbortHandler, done){
 
-    var mediaID = options.id;
-    var url  = options.url;
-    var type = options.type;
-    var fname = options.fname;
-
-    var typeOptions = {
-        'mp3' : {
-            'ext' : '.mp3',
-            'ytdlOpts' : {
-                'filter' : 'audioonly'
-            }
-        },
-        'mp4' : {
-            'ext' : '.mp4',
-            'ytdlOpts' : {
-                'filter' : 'audioandvideo'
-            }           
-        }
-    }
-
-
-    logger.info('download to %s',fname );
-   
-    var downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
-    var fileWriteStream = fs.createWriteStream(fname);
-    
-    downloadStream.pipe(fileWriteStream);     
-
-    //onCancel(downloadStream);
-
-    fileWriteStream.on('close',function(err){
-        logger.info('fie write closed!');
-    })
-
-    fileWriteStream.on('error',function(err){
-        logger.info('file write error');
-    })
-
-    fileWriteStream.on('finish',function(err){
-        logger.info('file write finish')
-    })
-
-
-    downloadStream.on('response',function(msg){
-        logger.info('downloadStream response done');
-        logger.info(msg.statusCode);
-        if(msg.statusCode === 200){
-            logger.info('request OK!')
-            addCancelHandler(downloadStream,fname);
-        }
-    })
-
-    downloadStream.on('progress',function(length,totalDownloaded,totalDownloadedLength){
-        
-        var percent = (totalDownloaded / totalDownloadedLength) * 100;
-        var percentString = percent.toFixed(2) + '%'
-        //logger.info('processed : %s', percentString);
-
-        var badge = d3.select('div.progressDiv[mediaID="' + mediaID + '"]').select('div').select('span');
-        badge.text(percentString);
-
-        if(totalDownloaded == totalDownloadedLength){
-            logger.info('download complete!');
-            var fullname = path.join(cwd, fname);
-            done(fullname);
-
-            //addPreview(options.type, fullname, options.mediaID);
-        }
-    })   
-
-    downloadStream.on('abort',function(){
-        logger.info('downloadStream abort fire!');
-        addAbortHandler(downloadStream, fname);
-    })
-    /*
-    downloadStream.on('abort', function(err){
-        logger.info('download canceled');
-    })
-    */
-
-}
 
 function audioToMP4(fullname, customExtn, mediaID, done){
     logger.info('audioToMP4 start : %s', fullname);
