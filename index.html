@@ -4,40 +4,79 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="./uikit.min.css" />
     <link rel="stylesheet" href="./render.css" />
+    <script src="./uikit.min.js"></script>
+    <script src="./uikit-icons.min.js"></script>
     <title>Youtube Downloader (by ryuken)</title>
   </head>
   <body>
       <div class="uk-section uk-section-small">
           <div class="uk-container">
             <div class="uk-grid uk-grid-small uk-child-width-expand" uk-grid>
-              <div class="uk-text-small uk-width-1-3">
-                <input class="uk-input uk-form-small" id="address"></input>
+              <div class="uk-width-1-3">
+                <div class="uk-grid uk-grid-small uk-child-width-expand" uk-grid>
+                  <div class="uk-inline">
+                    <a class="uk-form-icon uk-form-icon-flip" id="loadURL" href="#" uk-icon="icon: arrow-right"></a>
+                    <input class="uk-input uk-form-small" id="address"></input>
+                  </div>
+                  <div class="uk-width-auto">
+                    <span class="icon" id="goBack" uk-icon="icon: arrow-left"></span>
+                  </div>
+                  <div class="uk-width-auto">
+                    <span class="icon" id="goForward" uk-icon="icon: arrow-right"></span>
+                  </div>
+                  <div class="uk-width-auto">
+                    <span class="icon" id="refresh" uk-icon="icon: refresh"></span>
+                  </div>
+                </div>
               </div>
+
+              <!--
               <div class="uk-width-auto">
                 <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="loadURL">go</div>
               </div>
+              -->
               <div class="uk-width-auto">
                 <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="addMP3">add mp3</div>
               </div>
+
               <div class="uk-width-auto">
                 <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="addMP4">add mp4</div>
               </div>
+
+              <div class="uk-width-expand">
+                <input class="uk-input uk-form-small uk-width-1-1" id="downloadPath" disabled></input>
+              </div>
+
+              <div class-"uk-width-1-6">
+                <div class="uk-button uk-button-small uk-button-default uk-text-middle" id="chgPath"> change location</div>
+              </div>
+
             </div>             
 
             <div class="uk-grid-small uk-child-width-expand" id="top" uk-grid>
-              <div class="uk-width-1-3">
-                <webview id="browser" src="https://www.youtube.com/" allowpopups plugins webpreferences="nativeWindowOpen" style="display:flex;" class="uk-height-large"></webview>
-              </div>  
+               <div class="uk-width-1-3">
+                <webview id="browser" src="https://m.youtube.com/" useragent="Mozilla/5.0 (Linux; Android 5.1.1; Nexus 5 Build/LMY48B; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.65 Mobile Safari/537.3" allowpopups plugins webpreferences="nativeWindowOpen" style="display:flex;" class="uk-height-large"></webview>
+              </div>   
               <div>
-                <div class="uk-panel uk-panel-scrollable uk-height-large uk-text-small" id="filePannel">
-                </div>
+                <div class="uk-panel uk-panel-scrollable uk-height-large uk-text-small" id="mediaPannel"></div>
               </div>  
 
             </div>
           </div>          
           <div class="uk-margin-small"></div>
-
+   
           <div class="uk-container"> 
+            <div class="uk-grid uk-grid-small" uk-grid>
+              
+              <div class="uk-width-auto">
+                <span class="icon" id="zoomin" uk-icon="icon: plus-circle"></span>
+              </div>
+              <div class="uk-width-auto">
+                <span class="icon" id="zoomout" uk-icon="icon: minus-circle"></span>
+              </div>
+
+            </div>
+
             <p class='uk-margin-small'></p> 
             <div class='uk-textarea uk-height-small' id="msgPanel"></div>
           
@@ -58,7 +97,7 @@
           </div> <!-- container end -->
         </div> <!-- section end -->
 
-    <script src="./uikit-icons.min.js"></script>
+
     <script>
       // You can also require other files to run in this process
       require('./renderer.js')

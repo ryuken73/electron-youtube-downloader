@@ -16,4 +16,30 @@ textarea {
 .uk-label {
     pointer-events: auto !important;
     cursor: pointer;
-  }
+ }
+
+ #address, #downloadPath {
+     font-size : 11px;
+ }
+
+ .icon:hover, #addMP3:hover, #addMP4:hover {
+     background-color : gray;
+ }
+
+ .uk-label:hover {
+     background-color: gainsboro;
+ }
+
+.downloading {
+    background-color: rebeccapurple !important;
+    color:white !important;
+}
+
+.done {
+    background-color: cyan !important;
+    color:black !important;
+}
+
+.uk-grid+.uk-grid-small {
+    margin-top : 8px;
+}
