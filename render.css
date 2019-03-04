@@ -39,3 +39,7 @@ textarea {
     background-color: cyan !important;
     color:black !important;
 }
+
+.uk-grid+.uk-grid-small {
+    margin-top : 8px;
+}

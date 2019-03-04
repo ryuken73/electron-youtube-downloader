@@ -20,14 +20,12 @@ const chgPathBtn = d3.select('#chgPath');
 chgPathBtn.on('click', () => {
     logger.debug('change path btn clicked');
     ipcRenderer.send('open-file-dialog');
+
 })
 ipcRenderer.on('selected-directory', (event, path) => {
     global.downloadPath = path[0];
     d3.select('#downloadPath').property('value',global.downloadPath);
 })
-
-
-
 
 let mediaID = 0;
 
@@ -56,6 +54,8 @@ const forwardBtn = d3.select('#goForward');
 const refreshBtn = d3.select('#refresh');
 const addMP3Btn = d3.select('#addMP3');
 const addMP4Btn = d3.select('#addMP4');
+const zoominBtn = d3.select('#zoomin');
+const zoomoutBtn = d3.select('#zoomout');
 
 backBtn.on('click', () => {
     webview.goBack();
@@ -69,7 +69,7 @@ refreshBtn.on('click', () => {
     webview.reload();
 })
 
-addClickEffect([backBtn, forwardBtn, refreshBtn, addMP3Btn, addMP4Btn]);
+addClickEffect([backBtn, forwardBtn, refreshBtn, addMP3Btn, addMP4Btn, zoominBtn, zoomoutBtn]);
 
 function addClickEffect(tgt){
 
@@ -122,13 +122,23 @@ function UKalert(msg){
     UIkit.modal('#errorModal').show();
 }
 
-const zoomFactor = 0.75;
+let zoomFactor = 1.0;
 
 d3.select('webview').on('dom-ready', function(){
     // when page load finished, update address bar
     const url = webview.getURL();
     logger.info('d3 object event handler on')
     d3.select('#address').property('value', url);
+    webview.setZoomFactor(zoomFactor);
+})
+
+zoominBtn.on('click', () => {
+    zoomFactor += 0.1;
+    webview.setZoomFactor(zoomFactor);
+})
+
+zoomoutBtn.on('click', () => {
+    zoomFactor -= 0.1;
     webview.setZoomFactor(zoomFactor);
 })
 
