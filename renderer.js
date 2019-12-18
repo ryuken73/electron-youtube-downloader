@@ -85,7 +85,6 @@ function addClickEffect(tgt){
             console.log('mouseup')
             element.transition().style('transform', 'translateY(-5%)')
         })
-
     }
 }
 
