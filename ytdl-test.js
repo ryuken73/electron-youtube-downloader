@@ -7,8 +7,15 @@ var url = 'https://www.youtube.com/watch?v=zEkg4GBQumc';
 ytdl('https://www.youtube.com/watch?v=zEkg4GBQumc')
 .pipe(fs.createWriteStream('video.mp4'));
 */
-var downloadStream = ytdl('https://www.youtube.com/watch?v=zEkg4GBQumc',{'filter':'audioonly'})
-downloadStream.pipe(fs.createWriteStream('video.mp3'));  
+const options = {
+    'ext' : '.mp4',
+    'ytdlOpts' : {
+        'filter' : 'audioandvideo'
+    }   
+}
+//var downloadStream = ytdl('https://www.youtube.com/watch?v=zEkg4GBQumc', options)
+var downloadStream = ytdl('https://m.youtube.com/watch?v=NRKqzBkrcBs', options)
+downloadStream.pipe(fs.createWriteStream('video.mp4'));  
 
 downloadStream.on('progress',function(length,totalDownloaded,totalDownloadedLength){
     console.log(length);

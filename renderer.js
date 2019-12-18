@@ -296,7 +296,7 @@ function download(options, addCancelHandler, addAbortHandler, done){
 
 
     logger.info('download to %s',fullname );
-   
+    logger.info('download from %s',url );
     const downloadStream = ytdl(url, typeOptions[type].ytdlOpts)
     const fileWriteStream = fs.createWriteStream(fullname);
     
@@ -487,13 +487,26 @@ function getMediaInfo(url,type,callback){
     createModal('getInfo','Geting Stream Information...')
     UIkit.modal('#procModal').show(); 
         
-    ytdl.getInfo(url)
-    .then(function(info){
-        //logger.info(info);
+    //ytdl.getInfo(url)
+    ytdl.getBasicInfo(url)
+    .then(function(response){
+        
+        logger.info(response.video_url);
+        logger.info(response.player_response.videoDetails.title)
+        logger.info(response.player_response.videoDetails.lengthSeconds)
+        //logger.info(response.formats)
+        /*
         logger.info(info.title);
         logger.info(info.thumbnail_url);
         logger.info(info.length_seconds);
+        */
+        const playerResponse = response.player_response;
+        const info = playerResponse.videoDetails;
+        //const format = response.formats[0];
+        //logger.info(response.player_response.videoDetails)
         //logger.info(info.formats)
+        //logger.info(playerResponse)
+        /*
         info.formats.forEach(function(format){
             const type = format.type;
             const quality = format.quality;
@@ -504,10 +517,16 @@ function getMediaInfo(url,type,callback){
             //logger.info(type,quality,container,encoding,profile);
 
         })
+
+        const {type, quality, url, container, encoding, profile} = format;
+        */
+        const url = response.video_url;
+        const {title, lengthSeconds} = info;
+
         mediaID += 1;
         UIkit.modal('#procModal').hide(); 
         clearModal('getInfo');
-        const opts = {url:url, title:info.title, type:type, duration:info.length_seconds, mediaID:mediaID};
+        const opts = {url, title, type, duration:lengthSeconds, mediaID};
         callback(opts);
     })
     .then(null, function(err){
