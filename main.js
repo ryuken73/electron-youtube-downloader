@@ -18,7 +18,13 @@ function createWindow () {
     width: 1280,
     height: 850, 
     resizable : false,
-    backgroundColor:'#2e2c29'})
+    backgroundColor:'#2e2c29',
+    webPreferences: {
+      nodeIntegration: true,
+      enableRemoteModule: true,
+      webviewTag: true
+    }
+  })
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({

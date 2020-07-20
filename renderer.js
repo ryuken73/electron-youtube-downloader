@@ -172,7 +172,7 @@ addMP3Btn.on('click',function(){
     }
 })
 
-addMP4Btn.on('click',function(){
+addMP4Btn.on('click', async function(){
 
     const type = 'mp4';
     const url = d3.select('#address').property('value');
@@ -180,7 +180,7 @@ addMP4Btn.on('click',function(){
     if(!validate(url)){
         UKalert('Not valid Youtube Url. check Url');        
     } else {
-        getMediaInfo(url, type, addPannel);
+        await getMediaInfo(url, type, addPannel);
     }
 })
 
@@ -458,16 +458,22 @@ function operDivToOpen(mediaID, fullname){
 
 // validate youtube url
 function validate(url){
-
+    console.log(`validating ${url}`);
     if(!ytdl.validateURL(url)){       
         return false;
     }
-
-    const vid = ytdl.getURLVideoID(url);
-    if(!ytdl.validateID(vid)){
-        return false;
+    console.log(`url validated`)
+    try{
+        const vid = ytdl.getURLVideoID(url);
+        if(!ytdl.validateID(vid)){
+            return false;
+        }
+        console.log(vid);
+        return true
+    
+    } catch (err) {
+        console.error(err);
     }
-    return true
 }
 
 function clearModal(modalID){
@@ -482,63 +488,36 @@ function createModal(modalID, msg){
     .text(msg)
 }
 
-function getMediaInfo(url,type,callback){
+async function getMediaInfo(url,type,callback){
 
     clearModal('getInfo')
     createModal('getInfo','Geting Stream Information...')
-    UIkit.modal('#procModal').show(); 
+    UIkit.modal('#procModal').show();
+    console.log(`getMediaInfo ${url} ${type}`) 
         
-    //ytdl.getInfo(url)
-    ytdl.getBasicInfo(url)
-    .then(function(response){
-        
+    try {
+        const response = await ytdl.getBasicInfo(url);
         logger.info(response.video_url);
         logger.info(response.player_response.videoDetails.title)
         logger.info(response.player_response.videoDetails.lengthSeconds)
-        //logger.info(response.formats)
-        /*
-        logger.info(info.title);
-        logger.info(info.thumbnail_url);
-        logger.info(info.length_seconds);
-        */
         const playerResponse = response.player_response;
         const info = playerResponse.videoDetails;
-        //const format = response.formats[0];
-        //logger.info(response.player_response.videoDetails)
-        //logger.info(info.formats)
-        //logger.info(playerResponse)
-        /*
-        info.formats.forEach(function(format){
-            const type = format.type;
-            const quality = format.quality;
-            const url = format.url;
-            const container = format.container;
-            const encoding = format.encoding;
-            const profile = format.profile;
-            //logger.info(type,quality,container,encoding,profile);
-
-        })
-
-        const {type, quality, url, container, encoding, profile} = format;
-        */
-        const url = response.video_url;
+        const video_url = response.video_url;
         const {title, lengthSeconds} = info;
-
+    
         mediaID += 1;
+        logger.info('before close modal!')
         UIkit.modal('#procModal').hide(); 
         clearModal('getInfo');
-        const opts = {url, title, type, duration:lengthSeconds, mediaID};
+        const opts = {url: video_url, title, type, duration:lengthSeconds, mediaID};
         callback(opts);
-    })
-    .then(null, function(err){
+    } catch (err){
         UKalert(err);
         logger.error(err);
         UIkit.modal('#procModal').hide(); 
         clearModal('getInfo');
-    })
-}
-
-
+    }
+}    
 
 function audioToMP4(fullname, customExtn, mediaID, done){
     logger.info('audioToMP4 start : %s', fullname);
