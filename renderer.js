@@ -258,7 +258,8 @@ const downloadClicked = function(downloadBTN, downloadOpts){
         d3.select(downloadBTN).text('PLAY');
         d3.select(downloadBTN).on('click',function(){     
             logger.info('playing media!');
-            shell.openItem(fullname);
+            // shell.openItem(fullname);
+            shell.openPath(fullname);
         })      
         procDivToDone(mediaID);
         operDivToOpen(mediaID, fullname);
